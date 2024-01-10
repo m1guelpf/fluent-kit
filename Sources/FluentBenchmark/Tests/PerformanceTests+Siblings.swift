@@ -3,7 +3,7 @@ import Dispatch
 import FluentKit
 import Foundation
 import NIOCore
-import SQLKit
+@preconcurrency import SQLKit
 
 extension FluentBenchmarker {
     internal func testPerformance_siblings() throws {

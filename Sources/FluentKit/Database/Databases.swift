@@ -12,7 +12,8 @@ public struct DatabaseConfigurationFactory {
     }
 }
 
-public final class Databases {
+#warning("Check this can be unchecked")
+public final class Databases: @unchecked Sendable {
     public let eventLoopGroup: EventLoopGroup
     public let threadPool: NIOThreadPool
 

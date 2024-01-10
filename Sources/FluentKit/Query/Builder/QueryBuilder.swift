@@ -146,7 +146,8 @@ public final class QueryBuilder<Model>
 
     // MARK: Fetch
 
-    public func chunk(max: Int, closure: @escaping ([Result<Model, Error>]) -> ()) -> EventLoopFuture<Void> {
+    @preconcurrency
+    public func chunk(max: Int, closure: @Sendable @escaping ([Result<Model, Error>]) -> ()) -> EventLoopFuture<Void> {
         var partial: [Result<Model, Error>] = []
         partial.reserveCapacity(max)
         return self.all { row in
@@ -216,7 +217,8 @@ public final class QueryBuilder<Model>
         return self.run { _ in }
     }
 
-    public func all(_ onOutput: @escaping (Result<Model, Error>) -> ()) -> EventLoopFuture<Void> {
+    @preconcurrency
+    public func all(_ onOutput: @Sendable @escaping (Result<Model, Error>) -> ()) -> EventLoopFuture<Void> {
         var all: [Model] = []
 
         let done = self.run { output in
@@ -251,7 +253,8 @@ public final class QueryBuilder<Model>
         return self
     }
 
-    public func run(_ onOutput: @escaping (DatabaseOutput) -> ()) -> EventLoopFuture<Void> {
+    @preconcurrency
+    public func run(_ onOutput: @Sendable @escaping (DatabaseOutput) -> ()) -> EventLoopFuture<Void> {
         // make a copy of this query before mutating it
         // so that run can be called multiple times
         var query = self.query

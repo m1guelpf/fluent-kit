@@ -72,11 +72,12 @@ public struct Page<T> {
     }
 }
 
+extension Page: Sendable where T: Sendable {}
 extension Page: Encodable where T: Encodable {}
 extension Page: Decodable where T: Decodable {}
 
 /// Metadata for a given `Page`.
-public struct PageMetadata: Codable {
+public struct PageMetadata: Codable, Sendable {
     /// Current page number. Starts at `1`.
     public let page: Int
 
@@ -106,7 +107,7 @@ public struct PageMetadata: Codable {
 }
 
 /// Represents information needed to generate a `Page` from the full result set.
-public struct PageRequest: Decodable {
+public struct PageRequest: Decodable, Sendable {
     /// Page number to request. Starts at `1`.
     public let page: Int
 

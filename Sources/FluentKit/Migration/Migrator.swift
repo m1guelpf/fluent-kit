@@ -26,8 +26,9 @@ public struct Migrator {
         )
     }
 
+    @preconcurrency
     public init(
-        databaseFactory: @escaping (DatabaseID?) -> (Database),
+        databaseFactory: @Sendable @escaping (DatabaseID?) -> (Database),
         migrations: Migrations,
         on eventLoop: EventLoop,
         migrationLogLevel: Logger.Level = .info
@@ -120,7 +121,7 @@ public struct Migrator {
     }
 }
 
-private final class DatabaseMigrator {
+private final class DatabaseMigrator: Sendable {
     let migrations: [Migration]
     let database: Database
     let id: DatabaseID?
