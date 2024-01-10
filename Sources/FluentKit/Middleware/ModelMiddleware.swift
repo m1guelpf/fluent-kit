@@ -1,6 +1,6 @@
 import NIOCore
 
-public protocol AnyModelMiddleware {
+public protocol AnyModelMiddleware: Sendable {
     func handle(
         _ event: ModelEvent,
         _ model: AnyModel,
@@ -67,7 +67,7 @@ extension AnyModelMiddleware {
 }
 
 extension Array where Element == AnyModelMiddleware {
-    internal func chainingTo<Model>(_ type: Model.Type, closure: @escaping (ModelEvent, Model, Database) throws -> EventLoopFuture<Void>) -> AnyModelResponder where Model: FluentKit.Model {
+    internal func chainingTo<Model>(_ type: Model.Type, closure: @escaping @Sendable (ModelEvent, Model, Database) throws -> EventLoopFuture<Void>) -> AnyModelResponder where Model: FluentKit.Model {
         var responder: AnyModelResponder = BasicModelResponder(handle: closure)
         for middleware in reversed() {
             responder = middleware.makeResponder(chainingTo: responder)
@@ -85,7 +85,7 @@ private struct ModelMiddlewareResponder: AnyModelResponder {
     }
 }
 
-public enum ModelEvent {
+public enum ModelEvent: Sendable {
     case create
     case update
     case delete(Bool)

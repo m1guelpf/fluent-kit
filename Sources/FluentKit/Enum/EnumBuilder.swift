@@ -7,7 +7,7 @@ extension Database {
     }
 }
 
-public final class EnumBuilder {
+public final class EnumBuilder: Sendable {
     let database: Database
     public var `enum`: DatabaseEnum
 
