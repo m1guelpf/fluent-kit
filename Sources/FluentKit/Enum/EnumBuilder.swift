@@ -1,5 +1,6 @@
 import NIOCore
 import SQLKit
+import NIOConcurrencyHelpers
 
 extension Database {
     public func `enum`(_ name: String) -> EnumBuilder {
@@ -9,11 +10,20 @@ extension Database {
 
 public final class EnumBuilder: Sendable {
     let database: Database
-    public var `enum`: DatabaseEnum
+    public var `enum`: DatabaseEnum {
+        get {
+            self._enum.withLockedValue { $0 }
+        }
+        set {
+            self._enum.withLockedValue { $0 = newValue }
+        }
+    }
+    
+    private let _enum: NIOLockedValueBox<DatabaseEnum>
 
     init(database: Database, name: String) {
         self.database = database
-        self.enum = .init(name: name)
+        self._enum = .init(.init(name: name))
     }
 
     public func `case`(_ name: String) -> Self {
@@ -54,15 +64,16 @@ public final class EnumBuilder: Sendable {
     // MARK: Private
 
     private func generateDatatype() -> EventLoopFuture<DatabaseSchema.DataType> {
-        EnumMetadata.migration.prepare(on: self.database).flatMap {
+        let enumName = self._enum.withLockedValue { $0.name }
+        return EnumMetadata.migration.prepare(on: self.database).flatMap {
             self.updateMetadata()
         }.flatMap { _ in
             // Fetch the latest cases.
-            EnumMetadata.query(on: self.database).filter(\.$name == self.enum.name).all()
+            EnumMetadata.query(on: self.database).filter(\.$name == enumName).all()
         }.map { cases in
             // Convert latest cases to usable DataType.
             .enum(.init(
-                name: self.enum.name,
+                name: enumName,
                 cases: cases.map { $0.case }
             ))
         }

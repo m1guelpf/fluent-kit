@@ -1,22 +1,27 @@
-import struct NIOConcurrencyHelpers.NIOLock
+import NIOConcurrencyHelpers
 
 /// Holds the history of queries for a database
-public final class QueryHistory {
+public final class QueryHistory: Sendable {
     /// The queries that were executed over a period of time
-    public var queries: [DatabaseQuery]
-
-    /// Protects
-    private var lock: NIOLock
+    public var queries: [DatabaseQuery] {
+        get {
+            self._queries.withLockedValue { $0 }
+        }
+        set {
+            self._queries.withLockedValue { $0 = newValue }
+        }
+    }
+    
+    private let _queries: NIOLockedValueBox<[DatabaseQuery]>
 
     /// Create a new `QueryHistory` with no existing history
     public init() {
-        self.queries = []
-        self.lock = .init()
+        self._queries = .init([])
     }
 
     func add(_ query: DatabaseQuery) {
-        self.lock.lock()
-        defer { self.lock.unlock() }
-        queries.append(query)
+        self._queries.withLockedValue {
+            $0.append(query)
+        }
     }
 }

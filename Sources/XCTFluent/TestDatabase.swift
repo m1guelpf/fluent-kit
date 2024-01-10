@@ -42,7 +42,7 @@ import NIOCore
 ///         TestOutput(Planet(name: "Pluto"))
 ///     ])
 ///
-public final class ArrayTestDatabase: TestDatabase {
+public final class ArrayTestDatabase: TestDatabase, @unchecked Sendable {
     var results: [[DatabaseOutput]]
 
     public init() {
@@ -69,7 +69,7 @@ public final class ArrayTestDatabase: TestDatabase {
     }
 }
 
-public final class CallbackTestDatabase: TestDatabase {
+public final class CallbackTestDatabase: TestDatabase, @unchecked Sendable {
     var callback: (DatabaseQuery) -> [DatabaseOutput]
 
     public init(callback: @escaping (DatabaseQuery) -> [DatabaseOutput]) {
@@ -83,7 +83,7 @@ public final class CallbackTestDatabase: TestDatabase {
     }
 }
 
-public protocol TestDatabase {
+public protocol TestDatabase: Sendable {
     func execute(
         query: DatabaseQuery,
         onOutput: (DatabaseOutput) -> ()
@@ -113,7 +113,7 @@ private struct _TestDatabase: Database {
 
     func execute(
         query: DatabaseQuery,
-        onOutput: @escaping (DatabaseOutput) -> ()
+        onOutput: @escaping @Sendable (DatabaseOutput) -> ()
     ) -> EventLoopFuture<Void> {
         guard context.eventLoop.inEventLoop else {
             return self.eventLoop.flatSubmit {
@@ -128,11 +128,11 @@ private struct _TestDatabase: Database {
         return self.eventLoop.makeSucceededFuture(())
     }
 
-    func transaction<T>(_ closure: @escaping (Database) -> EventLoopFuture<T>) -> EventLoopFuture<T> {
+    func transaction<T>(_ closure: @Sendable @escaping (Database) -> EventLoopFuture<T>) -> EventLoopFuture<T> {
         closure(self)
     }
 
-    func withConnection<T>(_ closure: (Database) -> EventLoopFuture<T>) -> EventLoopFuture<T> {
+    func withConnection<T>(_ closure: @Sendable (Database) -> EventLoopFuture<T>) -> EventLoopFuture<T> {
         closure(self)
     }
 

@@ -4,9 +4,10 @@ import Logging
 public protocol Database: Sendable {
     var context: DatabaseContext { get }
     
+    @preconcurrency
     func execute(
         query: DatabaseQuery,
-        onOutput: @escaping (DatabaseOutput) -> ()
+        onOutput: @Sendable @escaping (DatabaseOutput) -> ()
     ) -> EventLoopFuture<Void>
 
     func execute(
@@ -19,9 +20,11 @@ public protocol Database: Sendable {
 
     var inTransaction: Bool { get }
 
-    func transaction<T>(_ closure: @escaping (Database) -> EventLoopFuture<T>) -> EventLoopFuture<T>
+    @preconcurrency
+    func transaction<T>(_ closure: @Sendable @escaping (Database) -> EventLoopFuture<T>) -> EventLoopFuture<T>
     
-    func withConnection<T>(_ closure: @escaping (Database) -> EventLoopFuture<T>) -> EventLoopFuture<T>
+    @preconcurrency
+    func withConnection<T>(_ closure: @Sendable @escaping (Database) -> EventLoopFuture<T>) -> EventLoopFuture<T>
 }
 
 extension Database {
@@ -59,12 +62,12 @@ public protocol DatabaseDriver {
     func shutdown()
 }
 
-public protocol DatabaseConfiguration {
+public protocol DatabaseConfiguration: Sendable {
     var middleware: [AnyModelMiddleware] { get set }
     func makeDriver(for databases: Databases) -> DatabaseDriver
 }
 
-public struct DatabaseContext {
+public struct DatabaseContext: Sendable {
     public let configuration: DatabaseConfiguration
     public let logger: Logger
     public let eventLoop: EventLoop
